@@ -24,7 +24,8 @@ func main() {
 			Workflows: []workflow.WorkflowBase{
 				child, parent,
 			},
-			Slots: 100,
+			Slots:        1,
+			DurableSlots: 1,
 		},
 	)
 

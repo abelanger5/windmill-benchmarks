@@ -41,11 +41,11 @@ func FibonacciWorkflow(hatchet v1.HatchetClient) (workflow.WorkflowDeclaration[F
 		hatchet,
 	)
 
-	parent := factory.NewTask(
+	parent := factory.NewDurableTask(
 		create.StandaloneTask{
 			Name: "fibo-parent-2",
 		},
-		func(ctx worker.HatchetContext, input ParentInput) (*ParentOutput, error) {
+		func(ctx worker.DurableHatchetContext, input ParentInput) (*ParentOutput, error) {
 			iterations := 100
 			if iterStr := os.Getenv("ITERATIONS"); iterStr != "" {
 				if iter, err := strconv.Atoi(iterStr); err == nil && iter > 0 {
@@ -63,8 +63,11 @@ func FibonacciWorkflow(hatchet v1.HatchetClient) (workflow.WorkflowDeclaration[F
 					go func() {
 						defer wg.Done()
 						n := input.N
+						key := fmt.Sprintf("fibo-task-%d", i)
 						fmt.Printf("Fibonacci task %d called\n", n)
-						result, err := fibo.Run(ctx, FibonacciInput{N: n})
+						result, err := fibo.RunAsChild(ctx, FibonacciInput{N: n}, workflow.RunAsChildOpts{
+							Key: &key,
+						})
 
 						if err != nil {
 							fmt.Printf("Error in Fibonacci task %d: %v\n", n, err)
@@ -82,7 +85,7 @@ func FibonacciWorkflow(hatchet v1.HatchetClient) (workflow.WorkflowDeclaration[F
 				for i := 0; i < iterations; i++ {
 					fmt.Printf("Fibonacci task %d called\n", i)
 					n := input.N
-					result, err := fibo.Run(ctx, FibonacciInput{N: n})
+					result, err := fibo.RunAsChild(ctx, FibonacciInput{N: n}, workflow.RunAsChildOpts{})
 
 					if err != nil {
 						fmt.Printf("Error in Fibonacci task %d: %v\n", n, err)

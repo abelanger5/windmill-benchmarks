@@ -1,6 +1,6 @@
 from functools import cache
-from pydantic import BaseModel
 from hatchet_sdk import Context, Hatchet
+from pydantic import BaseModel
 
 hatchet = Hatchet(debug=True)
 
@@ -29,7 +29,7 @@ def fibo(n: int) -> int:
 def compute_fibonacci(input: FibonacciInput, _: Context) -> FibonacciOutput:
     return FibonacciOutput(result=fibo(input.n))
 
-@hatchet.task(input_validator=FibonacciTriggerInput)
+@hatchet.durable_task(input_validator=FibonacciTriggerInput)
 async def fibonacci_parent(
     input: FibonacciTriggerInput, _: Context
 ) -> FibonacciTriggerOutput:
@@ -52,7 +52,7 @@ async def fibonacci_parent(
 
 def main() -> None:
     worker = hatchet.worker(
-        slots=100, name="fibo-worker", workflows=[fibonacci_parent, compute_fibonacci]
+        slots=1, durable_slots=1, name="fibo-worker", workflows=[fibonacci_parent, compute_fibonacci]
     )
     worker.start()
 
