@@ -1,4 +1,4 @@
-from functools import cache
+import os
 from hatchet_sdk import Context, Hatchet
 from pydantic import BaseModel
 
@@ -9,8 +9,8 @@ class FibonacciInput(BaseModel):
 
 class FibonacciTriggerInput(BaseModel):
     n: int
-    iterations: int
-    parallel: bool
+    iterations: int = int(os.getenv("ITERATIONS", "10"))
+    parallel: bool = bool(os.getenv("PARALLEL", "True") == "True")
 
 class FibonacciOutput(BaseModel):
     result: int
@@ -18,7 +18,6 @@ class FibonacciOutput(BaseModel):
 class FibonacciTriggerOutput(BaseModel):
     results: list[FibonacciOutput]
 
-@cache
 def fibo(n: int) -> int:
     if n <= 1:
         return n
